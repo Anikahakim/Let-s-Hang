@@ -1,24 +1,25 @@
 "use client";
 
-import { supabase } from "../lib/supabaseClient";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function Home() {
-  async function testConnection() {
-    const { data, error } = await supabase.from("profiles").select("*");
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
-  }
+export default function HomePage() {
+  const router = useRouter();
 
-  return (
-    <main className="p-10">
-      <h1 className="text-3xl font-bold">Hangout Finder</h1>
+  useEffect(() => {
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser();
 
-      <button
-        onClick={testConnection}
-        className="mt-6 bg-black text-white px-4 py-2 rounded"
-      >
-        Test Supabase
-      </button>
-    </main>
-  );
+      if (data.user) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/login");
+      }
+    }
+
+    checkUser();
+  }, [router]);
+
+  return null; // nothing flashes
 }
