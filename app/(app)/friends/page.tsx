@@ -156,86 +156,92 @@ export default function FriendsPage() {
   }
 
   return (
-    <main className="p-10 space-y-6 max-w-xl">
-      <h1 className="text-2xl font-bold">Friends</h1>
+    <main className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-4 sm:p-8 lg:p-12">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">👥 Friends</h1>
 
       <div className="space-y-2">
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
-            className="border p-2 flex-1"
-            placeholder="Search username"
+            className="flex-1 border-2 border-gray-300 rounded-lg p-3 focus:outline-none focus:border-purple-500 transition-colors"
+            placeholder="Search username..."
             value={searchUsername}
             onChange={(e) => setSearchUsername(e.target.value)}
           />
-          <button onClick={searchUser} className="bg-black text-white px-4 py-2 rounded">
-            Search
+          <button onClick={searchUser} className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg">
+            🔍 Search
           </button>
         </div>
 
         {foundProfile && (
-          <div className="border p-3 rounded">
-            <p>
-              Found: <b>@{foundProfile.username}</b>
+          <div className="bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-blue-300 p-4 rounded-lg">
+            <p className="text-lg">
+              Found: <b className="text-purple-600">@{foundProfile.username}</b>
               {foundProfile.full_name ? ` (${foundProfile.full_name})` : ""}
             </p>
-            <button onClick={sendRequest} className="mt-2 bg-black text-white px-4 py-2 rounded">
-              Send friend request
+            <button onClick={sendRequest} className="mt-3 w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+              ➕ Send friend request
             </button>
           </div>
         )}
 
-        {errorMsg && <p className="text-red-600">{errorMsg}</p>}
+        {errorMsg && <p className="bg-red-100 border-2 border-red-400 text-red-700 px-4 py-3 rounded-lg font-semibold">{errorMsg}</p>}
       </div>
 
-      <section className="space-y-2">
-        <h2 className="text-xl font-semibold">Incoming requests</h2>
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold text-pink-600">📬 Incoming Requests</h2>
         {incoming.length === 0 ? (
-          <p className="text-gray-600">None</p>
+          <p className="text-gray-500 italic">No incoming requests</p>
         ) : (
           incoming.map((f: any) => (
-            <div key={f.id} className="border p-3 rounded flex items-center justify-between">
+            <div key={f.id} className="bg-white border-2 border-pink-200 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:shadow-md transition-shadow">
               <div>
-                <p className="font-medium">@{f.otherUser?.username}</p>
+                <p className="font-bold text-lg">@{f.otherUser?.username}</p>
                 {f.otherUser?.full_name && (
                   <p className="text-sm text-gray-600">{f.otherUser.full_name}</p>
                 )}
               </div>
               <button
                 onClick={() => acceptRequest(f.id)}
-                className="bg-black text-white px-4 py-2 rounded"
+                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold px-6 py-2 rounded-lg transition-all shadow-md hover:shadow-lg"
               >
-                Accept
+                ✅ Accept
               </button>
             </div>
           ))
         )}
       </section>
 
-      <section className="space-y-2">
-      <h2 className="text-xl font-semibold">Accepted friends</h2>
-
-      {accepted.length === 0 ? (
-        <p className="text-gray-600">None</p>
-      ) : (
-        accepted.map((f: any) => (
-          <div
-            key={f.id}
-            className="border p-3 rounded flex items-center justify-between"
-          >
-            <div>
-              <p className="font-medium">
-                @{f.otherUser?.username}
-              </p>
-              {f.otherUser?.full_name && (
-                <p className="text-sm text-gray-600">
-                  {f.otherUser.full_name}
-                </p>
-              )}
-            </div>
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold text-green-600">💚 Friends</h2>
+        {accepted.length === 0 ? (
+          <p className="text-gray-500 italic">No friends yet</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {accepted.map((f: any) => (
+              <div
+                key={f.id}
+                className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-lg hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-white font-bold">👤</div>
+                  <div>
+                    <p className="font-bold text-lg">
+                      @{f.otherUser?.username}
+                    </p>
+                    {f.otherUser?.full_name && (
+                      <p className="text-sm text-gray-600">
+                        {f.otherUser.full_name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))
-      )}
-    </section>
+        )}
+      </section>
+    </div>
     </main>
   );
 }

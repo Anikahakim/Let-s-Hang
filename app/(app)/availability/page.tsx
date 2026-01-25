@@ -137,19 +137,21 @@ export default function AvailabilityPage() {
   }
 
     return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Set Availability</h1>
-      <p className="text-sm text-gray-600 mb-4">
-        Selected slots: {selected.size}
-      </p>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">📅 Set Your Availability</h1>
+        <p className="text-gray-600 mb-6">Click the slots when you're free to hang out!</p>
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-md">
+          <p className="text-lg font-semibold">Selected slots: <span className="text-purple-600 font-bold">{selected.size}</span></p>
+        </div>
 
-      <div className="overflow-auto border rounded">
-        <table className="border-collapse w-full">
+      <div className="overflow-auto border rounded-xl shadow-lg bg-white">
+        <table className="border-collapse w-full text-center">
           <thead>
-            <tr>
-              <th className="sticky top-0 bg-white border p-2 text-left w-20"></th>
+            <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+              <th className="sticky top-0 border p-3 text-left w-20 font-semibold"></th>
               {days.map((day) => (
-                <th key={day} className="sticky top-0 bg-white border p-2">
+                <th key={day} className="sticky top-0 border p-3 font-semibold text-sm sm:text-base">
                   {day}
                 </th>
               ))}
@@ -158,22 +160,23 @@ export default function AvailabilityPage() {
 
           <tbody>
             {times.map((time) => (
-              <tr key={time}>
-                <td className="border p-2 text-sm whitespace-nowrap">{time}</td>
+              <tr key={time} className="hover:bg-blue-50 transition-colors">
+                <td className="border p-2 text-sm whitespace-nowrap font-semibold text-gray-700 bg-gray-50">{time}</td>
 
                 {days.map((day) => {
                   const key = `${day}-${time}`;
                   const isSelected = selected.has(key);
 
                   return (
-                    <td key={key} className="border p-0">
+                    <td key={key} className="border p-1">
                       <button
                         type="button"
                         onClick={() => toggleSlot(day, time)}
-                        className="w-full h-8 border cursor-pointer hover:opacity-80"
-                        style={{backgroundColor: isSelected ? "#111827" : "#f3f4f6", 
-                          transition: "background-color 0.15s ease",
-                        }}
+                        className={`w-full h-10 rounded-lg transition-all transform hover:scale-105 ${
+                          isSelected
+                            ? 'bg-gradient-to-br from-purple-500 to-blue-500 shadow-md'
+                            : 'bg-white hover:bg-gray-100 border border-gray-300'
+                        }`}
                         aria-label={`${day} ${time}`}
                       />
                     </td>
@@ -187,10 +190,11 @@ export default function AvailabilityPage() {
 
       <button
         onClick={saveAvailability}
-        className="mt-6 bg-black text-white px-4 py-2 rounded"
+        className="mt-8 w-full sm:w-auto bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
       >
-        Save Availability
+        ✨ Save Availability
       </button>
+      </div>
     </main>
   );
 }
