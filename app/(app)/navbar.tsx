@@ -14,7 +14,7 @@ export default function NavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b px-6 py-3 flex gap-2 items-center">
+    <nav className="border-b border-gray-200 bg-white px-6 py-4 flex gap-2 items-center shadow-sm">
       {tabs.map((t) => {
         const active = pathname === t.href;
 
@@ -22,10 +22,11 @@ export default function NavBar() {
           <Link
             key={t.href}
             href={t.href}
-            className={[
-              "px-3 py-2 rounded-md font-semibold",
-              active ? "bg-black text-white" : "text-black hover:bg-gray-100",
-            ].join(" ")}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              active
+                ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md"
+                : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
+            }`}
           >
             {t.label}
           </Link>
