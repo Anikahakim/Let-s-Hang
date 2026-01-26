@@ -34,6 +34,7 @@ function toDayTimeKey(d: Date) {
 export default function AvailabilityPage() {
   const [userId, setUserId] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [weekDates, setWeekDates] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     async function getUserAndLoad() {
@@ -48,6 +49,16 @@ export default function AvailabilityPage() {
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay() + 1);
       startOfWeek.setHours(0, 0, 0, 0);
+
+      // Build a map of day -> date string
+      const dateMap: { [key: string]: string } = {};
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + i);
+        const monthDay = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        dateMap[days[i]] = monthDay;
+      }
+      setWeekDates(dateMap);
 
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 7);
@@ -140,19 +151,22 @@ export default function AvailabilityPage() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">📅 Set Your Availability</h1>
-        <p className="text-gray-600 mb-6">Click the slots when you're free to hang out!</p>
+        <p className="text-gray-600 mb-6">Select all the time slots this week when you're available to hang out. Your availability will be saved and used to match with friends.</p>
+        
         <div className="bg-white rounded-lg p-4 mb-6 shadow-md">
           <p className="text-lg font-semibold">Selected slots: <span className="text-purple-600 font-bold">{selected.size}</span></p>
+          <p className="text-sm text-gray-600 mt-1">Click slots to select/deselect them (they'll turn purple/blue when selected)</p>
         </div>
 
       <div className="overflow-auto border rounded-xl shadow-lg bg-white">
         <table className="border-collapse w-full text-center">
           <thead>
             <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-              <th className="sticky top-0 border p-3 text-left w-20 font-semibold"></th>
+              <th className="sticky top-0 border p-3 text-left w-20 font-semibold">Time</th>
               {days.map((day) => (
                 <th key={day} className="sticky top-0 border p-3 font-semibold text-sm sm:text-base">
-                  {day}
+                  <div>{day}</div>
+                  <div className="text-xs font-normal text-blue-100">{weekDates[day]}</div>
                 </th>
               ))}
             </tr>
