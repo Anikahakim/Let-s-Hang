@@ -25,7 +25,7 @@ export default function NavBar() {
             className={`px-4 py-2 rounded-lg font-semibold transition-all ${
               active
                 ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md"
-                : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
+                : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
             }`}
           >
             {t.label}
