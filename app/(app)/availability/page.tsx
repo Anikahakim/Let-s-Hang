@@ -296,6 +296,18 @@ export default function AvailabilityPage() {
       });
 
       setSelected(set);
+
+      // Load saved event titles from localStorage
+      const savedEventTitles = localStorage.getItem(`eventTitles_${uid}`);
+      if (savedEventTitles) {
+        try {
+          const parsedTitles = JSON.parse(savedEventTitles) as Record<string, string>;
+          const titlesMap = new Map(Object.entries(parsedTitles));
+          setEventTitles(titlesMap);
+        } catch (e) {
+          console.log("Failed to parse saved event titles:", e);
+        }
+      }
     }
 
     getUserAndLoad();
@@ -347,6 +359,14 @@ export default function AvailabilityPage() {
 
       setSelected(newSelected);
       setEventTitles(parsedEventTitles);
+
+      // Save event titles to localStorage
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const titlesObject = Object.fromEntries(parsedEventTitles);
+        localStorage.setItem(`eventTitles_${data.user.id}`, JSON.stringify(titlesObject));
+      }
+
       setImportMessage(
         `Imported! Found ${eventCount} event${eventCount !== 1 ? "s" : ""} this week. ` +
           `${newSelected.size} slots marked as available (${busySlots.size} busy slots hidden). ` +
