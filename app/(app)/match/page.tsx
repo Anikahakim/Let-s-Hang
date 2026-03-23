@@ -105,6 +105,13 @@ export default function MatchPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
 
+  // Event scheduling modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<Range | null>(null);
+  const [eventName, setEventName] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+
   useEffect(() => {
     async function init() {
       const { data } = await supabase.auth.getUser();
@@ -239,6 +246,94 @@ export default function MatchPage() {
     setRanges(allRanges.slice(0, 50)); // show top 50 ranges
   }
 
+  function openScheduleModal(range: Range) {
+    setSelectedRange(range);
+    setEventName("");
+    setEventLocation("");
+    setShowScheduleModal(true);
+  }
+
+  function generateICSFile() {
+    if (!selectedRange || !eventName) return;
+
+    const startDate = new Date(selectedRange.start);
+    const endDate = new Date(selectedRange.end);
+
+    // Format dates for ICS (YYYYMMDDTHHMMSS)
+    const formatICSDate = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Let's Hang//Event Scheduler//EN
+BEGIN:VEVENT
+UID:${Date.now()}@letshang
+DTSTAMP:${formatICSDate(new Date())}
+DTSTART:${formatICSDate(startDate)}
+DTEND:${formatICSDate(endDate)}
+SUMMARY:${eventName}
+LOCATION:${eventLocation || 'TBD'}
+DESCRIPTION:Event scheduled via Let's Hang
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+    return icsContent;
+  }
+
+  function downloadICS() {
+    const icsContent = generateICSFile();
+    if (!icsContent) return;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${eventName.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function scheduleEvent() {
+    if (!selectedRange || !eventName || !me) return;
+
+    setIsScheduling(true);
+
+    try {
+      // Get the profiles of participants
+      const participantIds = [me, ...Array.from(selectedFriendIds)];
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name")
+        .in("id", participantIds);
+
+      if (profileError) throw profileError;
+
+      const participantNames = (profiles || []).map(p => p.username || p.full_name || 'Unknown').join(', ');
+
+      // In a real implementation, you would:
+      // 1. Save the event to a database table
+      // 2. Send emails via Supabase Edge Functions + a service like Resend or SendGrid
+      // 3. Include the .ics file as an attachment
+
+      alert(`✅ Event "${eventName}" scheduled successfully!\n\nInvitations would be sent to: ${participantNames}\n\n📧 In a full implementation, each participant would receive an email with the event details and .ics attachment.`);
+
+      setShowScheduleModal(false);
+      setEventName("");
+      setEventLocation("");
+      setSelectedRange(null);
+
+    } catch (error) {
+      console.error("Error scheduling event:", error);
+      alert("Failed to schedule event. Please try again.");
+    } finally {
+      setIsScheduling(false);
+    }
+  }
+
   return (
     <main className="p-10 space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
@@ -347,15 +442,89 @@ export default function MatchPage() {
                       )} • {r.count}/{groupSize} free
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded text-sm ${perfect ? "bg-black text-white" : "border"}`}>
-                    {r.count}/{groupSize}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openScheduleModal(r)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition"
+                    >
+                      Schedule
+                    </button>
+                    <span className={`px-2 py-1 rounded text-sm ${perfect ? "bg-black text-white" : "border"}`}>
+                      {r.count}/{groupSize}
+                    </span>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </section>
+
+      {/* Event Scheduling Modal */}
+      {showScheduleModal && selectedRange && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Schedule Event</h3>
+
+            <div className="mb-4">
+              <div className="text-sm text-gray-600 mb-2">Time:</div>
+              <div className="font-medium">{formatRange(selectedRange.start, selectedRange.end)}</div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Event Name *
+              </label>
+              <input
+                type="text"
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Coffee meetup, Game night..."
+                required
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <input
+                type="text"
+                value={eventLocation}
+                onChange={(e) => setEventLocation(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Central Park, Joe's Cafe..."
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={downloadICS}
+                disabled={!eventName}
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-4 py-2 rounded font-medium transition"
+              >
+                📅 Download .ics
+              </button>
+
+              <button
+                onClick={scheduleEvent}
+                disabled={!eventName || isScheduling}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded font-medium transition"
+              >
+                {isScheduling ? "Sending..." : "📧 Send Invites"}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowScheduleModal(false)}
+              className="w-full mt-3 text-gray-500 hover:text-gray-700 text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
