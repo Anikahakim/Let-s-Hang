@@ -63,79 +63,120 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="p-10 space-y-4">
-      <h1 className="text-2xl font-bold">Login</h1>
-
-      {!showResetForm ? (
-        <>
-          <input
-            className="border p-2 block"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            className="border p-2 block"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <div className="space-x-2">
-            <button
-              onClick={signIn}
-              className="bg-black text-white px-4 py-2"
-            >
-              Sign In
-            </button>
-
-            <button
-              onClick={signUp}
-              className="bg-gray-500 text-white px-4 py-2"
-            >
-              Sign Up
-            </button>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              👋 Let's Hang
+            </h1>
+            <p className="text-gray-600">
+              {!showResetForm ? "Sign in to find time with friends" : "Reset your password"}
+            </p>
           </div>
 
-          <button
-            onClick={() => setShowResetForm(true)}
-            className="text-blue-600 underline text-sm"
-          >
-            Forgot password?
-          </button>
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-gray-600">Enter your email to receive a password reset link</p>
-          <input
-            className="border p-2 block"
-            placeholder="Email"
-            value={resetEmail}
-            onChange={(e) => setResetEmail(e.target.value)}
-          />
+          {!showResetForm ? (
+            <form onSubmit={(e) => { e.preventDefault(); signIn(); }} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="your@email.com"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="space-x-2">
-            <button
-              onClick={resetPassword}
-              className="bg-green-600 text-white px-4 py-2"
-            >
-              Send Reset Link
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-            <button
-              onClick={() => {
-                setShowResetForm(false);
-                setResetEmail("");
-              }}
-              className="bg-gray-500 text-white px-4 py-2"
-            >
-              Back
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.02] shadow-md"
+                >
+                  Sign In
+                </button>
+
+                <button
+                  type="button"
+                  onClick={signUp}
+                  className="w-full bg-white border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-all"
+                >
+                  Create Account
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowResetForm(true)}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={(e) => { e.preventDefault(); resetPassword(); }} className="space-y-6">
+              <div className="text-center mb-6">
+                <p className="text-sm text-gray-600">
+                  Enter your email and we'll send you a reset link
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="your@email.com"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.02] shadow-md"
+                >
+                  Send Reset Link
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetForm(false);
+                    setResetEmail("");
+                  }}
+                  className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-all"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
