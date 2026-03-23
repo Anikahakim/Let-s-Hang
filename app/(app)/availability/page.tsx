@@ -17,14 +17,12 @@ function generateTimes() {
 const times = generateTimes();
 
 function toDayTimeKey(d: Date) {
-  const jsDay = d.getDay();
-  const map = [6, 0, 1, 2, 3, 4, 5];
-  const dayIndex = map[jsDay];
-  const day = days[dayIndex];
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
   const hh = d.getHours();
   const mm = d.getMinutes();
-  const time = `${hh}:${mm === 0 ? "00" : "30"}`;
-  return `${day}-${time}`;
+  return `${year}-${month}-${day}-${hh}:${mm === 0 ? "00" : "30"}`;
 }
 
 // ── ICS parsing ──────────────────────────────────────────────────────────────
@@ -246,15 +244,11 @@ export default function AvailabilityPage() {
     startOfWeek.setDate(now.getDate() - now.getDay() + 1);
     startOfWeek.setHours(0, 0, 0, 0);
 
-    const dateMap: { [key: string]: string } = {};
+    const dateMap: { [key: string]: Date } = {};
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
-      const monthDay = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      dateMap[days[i]] = monthDay;
+      dateMap[days[i]] = date;
     }
     return dateMap;
   };
@@ -314,7 +308,9 @@ export default function AvailabilityPage() {
   }, []);
 
   function toggleSlot(day: string, time: string) {
-    const key = `${day}-${time}`;
+    const date = new Date(weekDates[day]);
+    const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    const key = `${dateKey}-${time}`;
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -398,12 +394,9 @@ export default function AvailabilityPage() {
     const inserts: { user_id: string; start_time: string }[] = [];
 
     selected.forEach((slot) => {
-      const [day, time] = slot.split("-");
-      const dayIndex = days.indexOf(day);
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + dayIndex);
-      const [hour, minute] = time.split(":");
-      date.setHours(Number(hour), Number(minute), 0, 0);
+      const [year, month, day, time] = slot.split('-');
+      const [hour, minute] = time.split(':');
+      const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), 0, 0);
       inserts.push({ user_id: userId, start_time: date.toISOString() });
     });
 
@@ -542,7 +535,10 @@ export default function AvailabilityPage() {
                   >
                     <div>{day}</div>
                     <div className="text-xs font-normal text-blue-100">
-                      {weekDates[day]}
+                      {weekDates[day].toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </div>
                   </th>
                 ))}
@@ -556,8 +552,11 @@ export default function AvailabilityPage() {
                     {time}
                   </td>
 
-                  {days.map((day) => {
-                    const key = `${day}-${time}`;
+                  {days.map((day, dayIndex) => {
+                    const date = new Date(weekDates[day]);
+                    const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    const key = `${dateKey}-${time}`;
+
                     const isSelected = selected.has(key);
                     const eventTitle = eventTitles.get(key);
 
