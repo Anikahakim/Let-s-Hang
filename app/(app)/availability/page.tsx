@@ -146,7 +146,7 @@ function expandRRule(
   return results;
 }
 
-function markBusySlots(start: Date, end: Date, busy: Set<string>) {
+function markBusySlots(start: Date, end: Date, busy: Set<string>, eventTitles: Map<string, string>, title: string) {
   const slot = new Date(start);
   slot.setSeconds(0, 0);
   const mins = slot.getMinutes();
@@ -154,13 +154,18 @@ function markBusySlots(start: Date, end: Date, busy: Set<string>) {
 
   while (slot < end) {
     const h = slot.getHours();
-    if (h >= 8 && h < 22) busy.add(toDayTimeKey(slot));
+    if (h >= 8 && h < 22) {
+      const key = toDayTimeKey(slot);
+      busy.add(key);
+      eventTitles.set(key, title);
+    }
     slot.setTime(slot.getTime() + 30 * 60000);
   }
 }
 
 interface ICSParseResult {
   busySlots: Set<string>;
+  eventTitles: Map<string, string>;
   eventCount: number;
 }
 
@@ -172,6 +177,7 @@ function parseICSForWeek(icsText: string, weekStart: Date, weekEnd: Date): ICSPa
     .replace(/\r\n/g, "\n");
 
   const busy = new Set<string>();
+  const eventTitles = new Map<string, string>();
   let eventCount = 0;
 
   const eventBlocks = [...text.matchAll(/BEGIN:VEVENT([\s\S]*?)END:VEVENT/g)];
@@ -193,6 +199,7 @@ function parseICSForWeek(icsText: string, weekStart: Date, weekEnd: Date): ICSPa
     const dtstart = getProp("DTSTART");
     const dtend = getProp("DTEND");
     const rrule = getProp("RRULE");
+    const summary = getProp("SUMMARY") || "Busy";
 
     if (!dtstart) continue;
 
@@ -216,11 +223,11 @@ function parseICSForWeek(icsText: string, weekStart: Date, weekEnd: Date): ICSPa
 
     for (const occ of occurrences) {
       eventCount++;
-      markBusySlots(occ.start, occ.end, busy);
+      markBusySlots(occ.start, occ.end, busy, eventTitles, summary);
     }
   }
 
-  return { busySlots: busy, eventCount };
+  return { busySlots: busy, eventTitles, eventCount };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -228,6 +235,7 @@ function parseICSForWeek(icsText: string, weekStart: Date, weekEnd: Date): ICSPa
 export default function AvailabilityPage() {
   const [userId, setUserId] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [eventTitles, setEventTitles] = useState<Map<string, string>>(new Map());
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -326,7 +334,7 @@ export default function AvailabilityPage() {
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 7);
 
-      const { busySlots, eventCount } = parseICSForWeek(text, weekStart, weekEnd);
+      const { busySlots, eventTitles: parsedEventTitles, eventCount } = parseICSForWeek(text, weekStart, weekEnd);
 
       // Mark all 8am–10pm slots available except busy ones
       const newSelected = new Set<string>();
@@ -338,6 +346,7 @@ export default function AvailabilityPage() {
       });
 
       setSelected(newSelected);
+      setEventTitles(parsedEventTitles);
       setImportMessage(
         `Imported! Found ${eventCount} event${eventCount !== 1 ? "s" : ""} this week. ` +
           `${newSelected.size} slots marked as available (${busySlots.size} busy slots hidden). ` +
@@ -400,43 +409,61 @@ export default function AvailabilityPage() {
         </p>
 
         {/* Status bar */}
-        <div className="bg-white rounded-lg p-4 mb-4 shadow-md flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold">
-              Selected slots:{" "}
-              <span className="text-purple-600 font-bold">{selected.size}</span>
-            </p>
-            <p className="text-sm text-gray-600 mt-1">
-              Click slots to select/deselect them (purple = available)
-            </p>
+        <div className="bg-white rounded-lg p-4 mb-4 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-lg font-semibold">
+                Selected slots:{" "}
+                <span className="text-purple-600 font-bold">{selected.size}</span>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Click slots to select/deselect them
+              </p>
+            </div>
+
+            {/* Apple Calendar import */}
+            <div className="flex flex-col items-end gap-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".ics"
+                className="hidden"
+                onChange={handleCalendarImport}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-700 font-semibold py-2 px-4 rounded-xl transition-all text-sm shadow-sm"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                </svg>
+                Import from Apple Calendar
+              </button>
+              <p className="text-xs text-gray-400">
+                Export your calendar as .ics and upload here
+              </p>
+            </div>
           </div>
 
-          {/* Apple Calendar import */}
-          <div className="flex flex-col items-end gap-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".ics"
-              className="hidden"
-              onChange={handleCalendarImport}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 bg-white border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-700 font-semibold py-2 px-4 rounded-xl transition-all text-sm shadow-sm"
-            >
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
-              Import from Apple Calendar
-            </button>
-            <p className="text-xs text-gray-400">
-              Export your calendar as .ics and upload here
-            </p>
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-4 h-4 bg-gradient-to-br from-purple-500 to-blue-500 rounded"></div>
+              <span>Available (click to toggle)</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-4 h-4 bg-gray-300 rounded"></div>
+              <span>Unavailable (click to make available)</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-4 h-4 bg-red-400 rounded"></div>
+              <span>Busy (from calendar - shows event name)</span>
+            </div>
           </div>
         </div>
 
@@ -512,19 +539,34 @@ export default function AvailabilityPage() {
                   {days.map((day) => {
                     const key = `${day}-${time}`;
                     const isSelected = selected.has(key);
+                    const eventTitle = eventTitles.get(key);
 
                     return (
                       <td key={key} className="border p-1">
                         <button
                           type="button"
                           onClick={() => toggleSlot(day, time)}
-                          className={`w-full h-10 rounded-lg transition-all transform hover:scale-105 ${
+                          className={`w-full h-10 rounded-lg transition-all transform hover:scale-105 flex items-center justify-center text-xs font-medium ${
                             isSelected
-                              ? "bg-gradient-to-br from-purple-500 to-blue-500 shadow-md"
-                              : "bg-white hover:bg-gray-100 border border-gray-300"
+                              ? "bg-gradient-to-br from-purple-500 to-blue-500 shadow-md text-white"
+                              : eventTitle
+                              ? "bg-red-400 hover:bg-red-500 text-white cursor-not-allowed"
+                              : "bg-white hover:bg-gray-100 border border-gray-300 text-gray-400"
                           }`}
-                          aria-label={`${day} ${time}`}
-                        />
+                          disabled={!!eventTitle}
+                          title={eventTitle || `${day} ${time}`}
+                          aria-label={eventTitle ? `${eventTitle} (${day} ${time})` : `${day} ${time}`}
+                        >
+                          {eventTitle ? (
+                            <span className="truncate px-1 max-w-full" title={eventTitle}>
+                              {eventTitle.length > 8 ? `${eventTitle.substring(0, 8)}...` : eventTitle}
+                            </span>
+                          ) : isSelected ? (
+                            "✓"
+                          ) : (
+                            ""
+                          )}
+                        </button>
                       </td>
                     );
                   })}

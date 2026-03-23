@@ -38,16 +38,27 @@ export default function LoginPage() {
   }
 
   async function resetPassword() {
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    if (!resetEmail) {
+      alert("Please enter your email");
+      return;
+    }
 
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("Password reset email sent! Check your inbox.");
-      setShowResetForm(false);
-      setResetEmail("");
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        console.error("Reset password error:", error);
+        alert("Error: " + error.message);
+      } else {
+        alert("Password reset email sent! Check your inbox.");
+        setShowResetForm(false);
+        setResetEmail("");
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Failed to send reset email. Please try again.");
     }
   }
 
