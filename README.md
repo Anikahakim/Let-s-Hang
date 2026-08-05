@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Let's Hang
 
-## Getting Started
+Live app: [let-s-hang-gray.vercel.app](https://let-s-hang-gray.vercel.app)
 
-First, run the development server:
+A friend-scheduling web app. Add friends, mark your availability, and see where your free time overlaps with theirs, then turn that overlap into an actual event with one click.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+- **Auth** — email/password login, onboarding flow, and password reset, all via Supabase
+- **Friends** — send and accept friend requests, view your friends list
+- **Availability** — mark your free time on a calendar grid; event titles persist in localStorage so they survive a page reload
+- **Match** — once availability overlaps with a friend's, schedule an event directly, download it as an `.ics` file, and trigger an email notification to everyone involved
+- **Calendar legend** — see event names at a glance across the shared calendar view
+- Responsive, colorful UI built for both desktop and mobile
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Frontend | Next.js (App Router), TypeScript |
+| Auth, database | Supabase |
+| Calendar export | `.ics` generation for downloadable/importable events |
+
+## Project structure
+
+```
+app/
+├── (app)/
+│   ├── dashboard/       # landing view after login
+│   ├── friends/         # friend requests + friends list
+│   ├── availability/    # mark and view free time
+│   └── match/           # overlapping availability → scheduled event, ICS + email
+├── login/
+├── onboarding/
+├── reset-password/
+lib/
+└── supabaseClient.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 18+
+- A Supabase project
 
-## Learn More
+### Setup
 
-To learn more about Next.js, take a look at the following resources:
+```
+git clone <your-repo-url>
+cd lets-hang
+npm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env.local` file in the project root:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
-## Deploy on Vercel
+Run the dev server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Visit [http://localhost:3000](http://localhost:3000).
